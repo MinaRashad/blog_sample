@@ -78,6 +78,42 @@ app.post('/signup', bodyParser.urlencoded({ extended: true }),(req, res) => {
     })
 })
 
+// login
+app.post('/login', bodyParser.urlencoded({ extended: true }),(req, res) => {
+    console.log(req.body)
+    let username = req.body.username
+    let password = req.body.password
+
+    if(!req.body.username || !req.body.password){
+        res.send('Please fill out all fields')
+        return
+    }
+
+    // if incorrect username
+    db.get('SELECT * FROM users WHERE username = ?', [username
+    ], (err, row) => {
+        if (err) {
+            console.error(err.message)
+        }
+        if (!row) {
+            res.send('Incorrect username')
+            return
+        }
+        // if correct username
+        else {
+            // if incorrect password
+            if (row.password !== password) {
+                res.send('Incorrect password')
+                return
+            }
+            // if correct password
+            else {
+                res.send('Login successful')
+            }
+        }
+    })
+})
+
 
 app.listen(port, () => {
     console.log(`Listening on port ${port}`)

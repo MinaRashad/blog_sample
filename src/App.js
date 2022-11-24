@@ -35,6 +35,28 @@ class Page extends react.Component {
     }
   }
 
+  handleLogin = (e) => {
+    e.preventDefault();
+    console.log(`user: ${e.target.username.value}`);
+    let username = e.target.username.value;
+    let password = e.target.password.value;
+
+    try {
+     fetch('http://localhost:3001/login', {
+      method: 'POST',
+      body: "username=" + username + "&password=" + password,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    .then(res => res.text())
+    .then(res => {this.setState({server_response:res})});
+    } catch (err) {
+      console.log("error!");
+      console.log(err);
+    }
+  }
+
 
   render() {
     return (
@@ -52,7 +74,7 @@ class Page extends react.Component {
         </nav>
         <div className="content">
           {this.state.page === 'login' && 
-          <Login res={this.state.server_response}  />}
+          <Login res={this.state.server_response} handleLogin={this.handleLogin} />}
           {this.state.page === 'signup' && 
           <Signup res={this.state.server_response} handleSubmit={this.handleSignup} />}
           {this.state.page === 'about_me' && <AboutMe />}
@@ -69,7 +91,7 @@ class Page extends react.Component {
 
 function Login (props){
     return (
-      <form>
+      <form onSubmit={props.handleLogin}>
       <h1>Login</h1>
       <table>
         <tr>
@@ -81,6 +103,11 @@ function Login (props){
           <td><input type="password" name="password" /></td>
         </tr>
       </table>  
+      <div className={props.res === "Login successful"?"success":"error"}>
+        {props.res}
+      </div>
+      <input type="submit"/>
+
       </form>
     );
 }
