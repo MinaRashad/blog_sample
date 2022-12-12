@@ -115,6 +115,37 @@ app.post('/login', bodyParser.urlencoded({ extended: true }),(req, res) => {
 })
 
 
+app.post('/addblog', bodyParser.urlencoded({ extended: true }),(req, res) => {
+    console.log(req.body)
+    let title = req.body.title
+    let content = req.body.content
+    let author = req.body.author
+    let date = req.body.date
+
+    if(!req.body.title || !req.body.content || !req.body.author){
+        res.send('Please fill out all fields')
+        return
+    }
+
+    db.run('INSERT INTO blogs (title, content, creator, date) VALUES (?, ?, ?,?)', [title, content, author,date], (err) => {
+        if (err) {
+            console.error(err.message)
+        }
+        res.send('Blog added')
+    })
+})
+
+app.get('/blogs', (req, res) => {
+    db.all('SELECT * FROM blogs ORDER BY date DESC', (err, rows) => {
+        if (err) {
+            console.error(err.message)
+        }
+        res.send(rows)
+    })
+})
+
+
+
 app.listen(port, () => {
     console.log(`Listening on port ${port}`)
 }

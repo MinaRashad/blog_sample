@@ -8,7 +8,9 @@ class Page extends react.Component {
     super(props);
     this.state = {
       page: 'blogs',
-      server_response:''
+      server_response:'',
+      logged_in: false,
+      user:""
     };
   }
 
@@ -50,12 +52,53 @@ class Page extends react.Component {
       }
     })
     .then(res => res.text())
-    .then(res => {this.setState({server_response:res})});
+    .then(res => {
+      if(res !== "Login successful") this.setState({server_response:res})
+      else {
+        this.setState({page:'blogs', server_response:'', logged_in:true, user:username})
+      } // go to home if login successful
+    });
     } catch (err) {
       console.log("error!");
       console.log(err);
     }
   }
+
+  Addblog = (e) => {
+    e.preventDefault();
+    let title = e.target.title.value;
+    let content = e.target.content.value;
+    let author = this.state.user;
+    // make date format in yyyy-mm-dd hh:mm:ss
+    let date = new Date().toLocaleString('en-CA', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'});
+
+
+    fetch('http://localhost:3001/addblog', {
+      method: 'POST',
+      body: "title=" + title + "&content=" + content + "&author=" + author + "&date=" + date,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    .then(res => res.text())
+    .then(res => {
+      if(res !== "Blog added") this.setState({server_response:res})
+      else {
+        this.setState({page:'blogs', server_response:''})
+      } // go to home if login successful
+    });
+  }
+
+  getBlogs = () => {
+    fetch('http://localhost:3001/blogs')
+    .then(res => res.json())
+    .then(res => {
+      return res;
+    });
+  }
+
+
+
 
 
   render() {
@@ -63,12 +106,17 @@ class Page extends react.Component {
       <div>
         <nav>
           <ul>
-            {/* <li><a href="#">Create blog</a></li> */}
-            <li><span onClick={(e)=>this.setState({page:'login', server_response:''})}>Login</span></li>
-            <li><span onClick={(e)=>this.setState({page:'signup', server_response:''})}>Signup</span></li>
+            {/* Show login if not logged in*/}
+            {!this.state.logged_in && <li><span onClick={(e)=>this.setState({page:'login', server_response:''})}>Login</span></li>}
+            {!this.state.logged_in && <li><span onClick={(e)=>this.setState({page:'signup', server_response:''})}>Signup</span></li>}
+            
+            {/* Show other options */}
+            {this.state.logged_in && <li> <span>{"Welcome, " + this.state.user} </span></li>}
+            {this.state.logged_in && <li> <span onClick={(e)=>this.setState({page:'write_blog', server_response:''})}>write blog</span> </li>}
+
+
             <li><span onClick={(e)=>this.setState({page:'about_me', server_response:''})}>About Me</span></li>
             <li><span onClick={(e)=>this.setState({page:'blogs', server_response:''})}>Blogs</span></li>
-            <li><span onClick={(e)=>this.setState({page:'merch', server_response:''})}>Merchs</span></li>
 
           </ul>
         </nav>
@@ -78,8 +126,8 @@ class Page extends react.Component {
           {this.state.page === 'signup' && 
           <Signup res={this.state.server_response} handleSubmit={this.handleSignup} />}
           {this.state.page === 'about_me' && <AboutMe />}
-          {this.state.page === 'blogs' && <Blogs blogs={[]} />}
-          {this.state.page === 'merch' && <Merch />}
+          {this.state.page === 'blogs' && <Blogs getBlogs={this.getBlogs} />}
+          {this.state.page === 'write_blog' && <WriteBlog handleSubmit={this.Addblog}/>}
         </div>
       </div>
     );
@@ -115,8 +163,8 @@ function Login (props){
 function Signup (props){
     return (
       <form onSubmit={props.handleSubmit}>
+      <h1>Signup</h1>
       <table>
-        <h1>Signup</h1>
         <tbody>
         <tr>
           <td>Username</td>
@@ -145,7 +193,8 @@ function AboutMe(props){
   return (
     <div>
     <div className='aboutme'>
-      <img src='./aboutme.jpg' alt='Me'></img>
+      {/* <img src='./aboutme.jpg' alt='Me'></img> */}
+      <img src='https://images.pexels.com/photos/2375034/pexels-photo-2375034.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' alt='Me'></img>
       <p>Lorem Ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.Lorem Ipsum dolor</p>
     </div>
     <center>  <a href="#" class="fa fa-facebook"></a>
@@ -157,31 +206,45 @@ function AboutMe(props){
 }
 
 function Blogs(props){
+  let blogs = props.getBlogs();    
+  console.log(blogs);
   return (
     <div>
       <h1>Blogs</h1>
       <p className='blog_quote'>Read about the latest books</p>
-      <img className='blogsImage' src='https://whytoread.com/wp-content/uploads/2014/05/philosophy_books.jpg'></img>
-      <ul>
-        {props.blogs && props.blogs.map((blog) => <li><h3>{blog.title}</h3><p>{blog.content.slice(0,30)} ... <a href='#'>Read more</a> </p></li>)}
+      <img className='blogsImage' src='https://whytoread.com/wp-content/uploads/2014/05/philosophy_books.jpg' alt=''></img>
+
+
+      <ul> 
+        {blogs && console.log("yayy")}
+        {blogs && blogs.map((blog) => <li><h3>{blog.title}</h3><p>{blog.content.slice(0,30)} ... <a href='#'>Read more</a> </p></li>)}
       </ul>
     </div>
 
   );
 }
 
-function Merch(props){
+function WriteBlog(props){
   return (
     <div>
-      <h1>Merch</h1>
-      <ul>
-        <li><a href='#'>T-Shirt</a></li>
-        <li><a href='#'>Hoodie</a></li>
-        <li><a href='#'>Mug</a></li>
-      </ul>
+      <h1>Write Blog</h1>
+      <form onSubmit={props.handleSubmit}>
+        <table>
+          <tbody>
+          <tr>
+            <td>Title</td>
+            <td><input type="text" name="title" /></td>
+          </tr>
+          <tr>
+            <td>Content</td>
+            <td><textarea name="content" rows="10" cols="30"></textarea></td>
+          </tr>
+          </tbody>
+        </table>
+        <input type="submit"/>
+      </form>
     </div>
-
-  );
+  )
 }
 
 export default Page;
